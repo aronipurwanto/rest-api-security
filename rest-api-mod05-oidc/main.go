@@ -6,10 +6,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/spf13/viper"
 	"log"
-	"rest-api-mod05-oauth/config"
-	"rest-api-mod05-oauth/handlers"
-	"rest-api-mod05-oauth/models"
-	"rest-api-mod05-oauth/services"
+	"rest-api-mod05-oidc/config"
+	"rest-api-mod05-oidc/handlers"
+	"rest-api-mod05-oidc/models"
+	"rest-api-mod05-oidc/services"
 )
 
 func main() {
@@ -20,13 +20,13 @@ func main() {
 	config.ConnectDB()
 
 	// Migrate the schema
-	config.DB.AutoMigrate(&models.User{}, &models.Role{})
+	config.DB.AutoMigrate(&models.User{})
 
-	// Seed data for roles
+	// Seed data for users (optional)
 	models.SeedData(config.DB)
 
 	// Initialize OAuth config
-	services.InitOAuthConfig() // Inisialisasi konfigurasi OAuth2
+	services.InitOAuthConfig()
 
 	// Initialize Fiber app
 	app := fiber.New()

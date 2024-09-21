@@ -1,0 +1,17 @@
+app:
+  port: 3000
+
+database:
+  driver: mysql
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  password: password
+  name: oidc_db
+
+oauth:
+  client_id: your-client-id
+  client_secret: your-client-secret
+  auth_url: https://accounts.google.com/o/oauth2/auth
+  token_url: https://accounts.google.com/o/oauth2/token
+  redirect_url: http://localhost:3000/oauth/callback
