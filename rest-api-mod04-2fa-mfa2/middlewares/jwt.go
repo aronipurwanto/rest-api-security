@@ -22,6 +22,9 @@ func JWTMiddleware() fiber.Handler {
 			})
 		}
 
+		// Hapus kata "Bearer " dari token jika ada
+		tokenString = tokenString[len("Bearer "):]
+
 		// Memparsing token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			// Validasi metode tanda tangan token

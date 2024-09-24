@@ -21,4 +21,7 @@ func SetupRoutes(app *fiber.App) {
 	authRequired.Get("/profile", handlers.Profile)
 	authRequired.Get("/settings", handlers.Settings)
 	authRequired.Get("/dashboard", handlers.Dashboard)
+
+	// Route baru untuk mengekstrak token
+	app.Get("/extract-token", handlers.ExtractToken)
 }

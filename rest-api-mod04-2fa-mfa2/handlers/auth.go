@@ -106,6 +106,54 @@ func VerifyOTP(c *fiber.Ctx) error {
 	})
 }
 
+// ExtractToken function untuk mengekstrak informasi dari JWT token
+func ExtractToken(c *fiber.Ctx) error {
+	// Mendapatkan token dari header Authorization
+	tokenString := c.Get("Authorization")
+
+	if tokenString == "" {
+		log.Println("Token tidak ditemukan di header Authorization")
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Missing or invalid token",
+		})
+	}
+
+	// Hapus kata "Bearer " dari token jika ada
+	tokenString = tokenString[len("Bearer "):]
+
+	// Memparsing token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validasi metode tanda tangan token
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fiber.ErrUnauthorized
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		log.Println("Token tidak valid:", err)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Invalid token",
+		})
+	}
+
+	// Ekstrak klaim dari token
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		log.Println("Gagal mengekstrak klaim dari token")
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Invalid token claims",
+		})
+	}
+
+	// Mengembalikan klaim yang diekstrak
+	return c.JSON(fiber.Map{
+		"message":  "Token is valid",
+		"username": claims["username"],
+		"exp":      claims["exp"],
+	})
+}
+
 // generateOTP function untuk membuat OTP acak
 func generateOTP() string {
 	rand.Seed(time.Now().UnixNano())
