@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"github.com/gofiber/fiber/v2"
 	"log"
+	"rest-api-mod04-basic-auth/models"
 	"strings"
 )
 
@@ -54,8 +55,8 @@ func BasicAuth(c *fiber.Ctx) error {
 
 	log.Printf("Attempting authentication for user: %s", username)
 
-	// Simulate credential checking (this can be replaced with database or external service checks)
-	if username == "admin" && password == "password123" {
+	// Validate user credentials
+	if models.ValidateUser(username, password) {
 		log.Println("User authentication successful.")
 		c.Locals("user", username) // Set authenticated user
 		return c.Next()            // Continue to the next handler
