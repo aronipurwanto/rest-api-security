@@ -5,9 +5,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"log"
 	"math/rand"
+	"rest-api-mod04-2fa-mfa2/models"
 	"strconv"
 	"time"
-	"your_project/models"
 )
 
 // Kunci rahasia untuk menandatangani JWT token
