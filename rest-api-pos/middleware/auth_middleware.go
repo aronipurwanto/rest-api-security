@@ -6,10 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"rest-api-pos/config"
-	"rest-api-pos/controller"
 	"rest-api-pos/response"
 	"strings"
-	"time"
 )
 
 // AuthMiddleware is a middleware to verify the authorization token with Keycloak
@@ -26,26 +24,28 @@ func AuthMiddleware(c *fiber.Ctx) error {
 	if err := verifyTokenWithKeycloak(token); err != nil {
 		// Jika token kadaluwarsa, lakukan refresh token
 		if err.Error() == "oidc: token is expired" {
-			refreshToken := c.Cookies("refresh_token") // Mengambil refresh token dari cookie
+			return c.Status(fiber.StatusUnauthorized).JSON(response.ErrorResponse(401, "Failed to verify refreshed token"))
+			/*
+				refreshToken := c.Cookies("refresh_token") // Mengambil refresh token dari cookie
 
-			// Panggil fungsi refreshToken untuk mendapatkan token baru
-			tokenResponse, refreshErr := controller.RefreshTokenFromKeycloak(refreshToken)
-			if refreshErr != nil {
-				return c.Status(fiber.StatusUnauthorized).JSON(response.ErrorResponse(401, "Token expired and failed to refresh"))
-			}
+				// Panggil fungsi refreshToken untuk mendapatkan token baru
+				tokenResponse, refreshErr := controller.RefreshTokenFromKeycloak(refreshToken)
+				if refreshErr != nil {
+					return c.Status(fiber.StatusUnauthorized).JSON(response.ErrorResponse(401, "Token expired and failed to refresh"))
+				}
 
-			// Set token baru di header dan cookie, lalu lanjutkan request
-			c.Set("Authorization", "Bearer "+tokenResponse.AccessToken)
-			c.Cookie(&fiber.Cookie{
-				Name:    "refresh_token",
-				Value:   tokenResponse.RefreshToken,
-				Expires: time.Now().Add(time.Duration(tokenResponse.ExpiresIn) * time.Second),
-			})
-
-			// Verifikasi ulang token yang baru dengan Keycloak
-			if err := verifyTokenWithKeycloak(tokenResponse.AccessToken); err != nil {
-				return c.Status(fiber.StatusUnauthorized).JSON(response.ErrorResponse(401, "Failed to verify refreshed token"))
-			}
+				// Set token baru di header dan cookie, lalu lanjutkan request
+				c.Set("Authorization", "Bearer "+tokenResponse.AccessToken)
+				c.Cookie(&fiber.Cookie{
+					Name:    "refresh_token",
+					Value:   tokenResponse.RefreshToken,
+					Expires: time.Now().Add(time.Duration(tokenResponse.ExpiresIn) * time.Second),
+				})
+				// Verifikasi ulang token yang baru dengan Keycloak
+				if err := verifyTokenWithKeycloak(tokenResponse.AccessToken); err != nil {
+					return c.Status(fiber.StatusUnauthorized).JSON(response.ErrorResponse(401, "Failed to verify refreshed token"))
+				}
+			*/
 		} else {
 			return c.Status(fiber.StatusUnauthorized).JSON(response.ErrorResponse(401, "Invalid token"))
 		}
