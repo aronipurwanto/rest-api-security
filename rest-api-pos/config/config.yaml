@@ -1,0 +1,15 @@
+app:
+  port: 3000
+
+db:
+  user: root
+  password: P@ssW0rd32!
+  host: localhost
+  name: pos_system
+
+keycloak:
+  url: http://localhost:8080
+  client_id: golang-api-client
+  client_secret: your_client_secret
+  realm: api-realm
+  token_endpoint: /realms/api-realm/protocol/openid-connect/token
