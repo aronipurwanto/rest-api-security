@@ -5,6 +5,7 @@ import (
 	"rest-api-pos/config"
 	"rest-api-pos/controller"
 	"rest-api-pos/middleware"
+	"rest-api-pos/model"
 	"rest-api-pos/repository"
 )
 
@@ -54,4 +55,7 @@ func SetupRoutes(app *fiber.App) {
 
 	// Payment Routes
 	app.Post("/payments", middleware.AuthMiddleware, paymentController.CreatePayment)
+
+	// generate data
+	model.SeedData()
 }
