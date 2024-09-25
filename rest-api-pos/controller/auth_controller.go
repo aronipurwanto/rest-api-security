@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"io/ioutil"
 	"net/http"
@@ -49,7 +50,8 @@ func getTokenFromKeycloak(username, password string) (*TokenResponse, error) {
 	data.Set("password", password)
 
 	// Buat request POST
-	req, err := http.NewRequest("POST", config.AppConfig.Keycloak.URL+config.AppConfig.Keycloak.TokenEndpoint, strings.NewReader(data.Encode()))
+	keycloakUrl := fmt.Sprintf("%s/%s", config.AppConfig.Keycloak.URL, config.AppConfig.Keycloak.TokenEndpoint)
+	req, err := http.NewRequest("POST", keycloakUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}

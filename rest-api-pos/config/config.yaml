@@ -9,7 +9,7 @@ db:
 
 keycloak:
   url: http://localhost:9090
-  client_id: pos-login
-  client_secret: b6izmGJaBOYYichZdOVjWeaQS1lLALVg
+  clientId: pos-login
+  clientSecret: b6izmGJaBOYYichZdOVjWeaQS1lLALVg
   realm: pos-app
-  token_endpoint: realms/pos-app/protocol/openid-connect/token
+  tokenEndpoint: realms/pos-app/protocol/openid-connect/token
