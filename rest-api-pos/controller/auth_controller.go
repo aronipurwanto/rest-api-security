@@ -40,6 +40,8 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(response.SuccessResponse(tokenResponse, "Login successful"))
 }
 
+var keycloakUrl string = fmt.Sprintf("%s/%s", config.AppConfig.Keycloak.URL, config.AppConfig.Keycloak.TokenEndpoint)
+
 // getTokenFromKeycloak fetches token from Keycloak using username and password
 func getTokenFromKeycloak(username, password string) (*TokenResponse, error) {
 	data := url.Values{}
@@ -50,7 +52,6 @@ func getTokenFromKeycloak(username, password string) (*TokenResponse, error) {
 	data.Set("password", password)
 
 	// Buat request POST
-	keycloakUrl := fmt.Sprintf("%s/%s", config.AppConfig.Keycloak.URL, config.AppConfig.Keycloak.TokenEndpoint)
 	req, err := http.NewRequest("POST", keycloakUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
@@ -120,7 +121,7 @@ func RefreshTokenFromKeycloak(refreshToken string) (*TokenResponse, error) {
 	data.Set("grant_type", "refresh_token")
 	data.Set("refresh_token", refreshToken)
 
-	req, err := http.NewRequest("POST", config.AppConfig.Keycloak.URL+config.AppConfig.Keycloak.TokenEndpoint, strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", keycloakUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +166,8 @@ func GetProfile(c *fiber.Ctx) error {
 // getUserProfileFromKeycloak fetches the user profile from Keycloak using the access token
 func getUserProfileFromKeycloak(accessToken string) (map[string]interface{}, error) {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", config.AppConfig.Keycloak.URL+"/realms/"+config.AppConfig.Keycloak.Realm+"/protocol/openid-connect/userinfo", nil)
+	keycloakUrl := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/userinfo", config.AppConfig.Keycloak.URL, config.AppConfig.Keycloak.Realm)
+	req, err := http.NewRequest("GET", keycloakUrl, nil)
 	if err != nil {
 		return nil, err
 	}
