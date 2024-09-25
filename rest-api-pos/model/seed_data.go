@@ -5,10 +5,10 @@ import (
 	"rest-api-pos/config"
 )
 
-// autoMigrate runs the database migrations
+// AutoMigrate runs the database migrations
 func AutoMigrate() error {
 	// Daftarkan model-model yang akan dimigrasikan (dibuat tabelnya)
-	err := config.DB.AutoMigrate(&Product{}, &Category{}, &Supplier{})
+	err := config.DB.AutoMigrate(&Product{}, &Category{}, &Supplier{}, &Customer{}, &Employee{}, &Payment{}, &Order{}, &OrderDetail{}, &Sale{}, &SaleDetail{}, &Stock{})
 	if err != nil {
 		return err
 	}
@@ -16,13 +16,16 @@ func AutoMigrate() error {
 	return nil
 }
 
+// SeedData populates the database with initial data
 func SeedData() {
+	// Menjalankan migrasi otomatis
 	err := AutoMigrate()
 	if err != nil {
+		log.Fatalf("Database migration failed: %v", err)
 		return
 	}
 
-	// Sample Category
+	// Seeding Category data
 	categories := []Category{
 		{Name: "Electronics"},
 		{Name: "Groceries"},
@@ -37,10 +40,12 @@ func SeedData() {
 	}
 
 	for _, category := range categories {
-		config.DB.FirstOrCreate(&category, Category{Name: category.Name})
+		if err := config.DB.FirstOrCreate(&category, Category{Name: category.Name}).Error; err != nil {
+			log.Printf("Failed to seed category: %v", err)
+		}
 	}
 
-	// Sample Supplier
+	// Seeding Supplier data
 	suppliers := []Supplier{
 		{Name: "Supplier A", Address: "Jakarta"},
 		{Name: "Supplier B", Address: "Bandung"},
@@ -55,10 +60,12 @@ func SeedData() {
 	}
 
 	for _, supplier := range suppliers {
-		config.DB.FirstOrCreate(&supplier, Supplier{Name: supplier.Name})
+		if err := config.DB.FirstOrCreate(&supplier, Supplier{Name: supplier.Name}).Error; err != nil {
+			log.Printf("Failed to seed supplier: %v", err)
+		}
 	}
 
-	// Sample Product
+	// Seeding Product data
 	products := []Product{
 		{Name: "Laptop", Price: 10000, Stock: 10, CategoryID: 1, SupplierID: 1},
 		{Name: "Smartphone", Price: 5000, Stock: 20, CategoryID: 1, SupplierID: 2},
@@ -83,6 +90,11 @@ func SeedData() {
 	}
 
 	for _, product := range products {
-		config.DB.FirstOrCreate(&product, Product{Name: product.Name})
+		// FirstOrCreate uses both Name, CategoryID, and SupplierID to prevent duplicates
+		if err := config.DB.FirstOrCreate(&product, Product{Name: product.Name, CategoryID: product.CategoryID, SupplierID: product.SupplierID}).Error; err != nil {
+			log.Printf("Failed to seed product: %v", err)
+		}
 	}
+
+	log.Println("Database seeding completed successfully.")
 }
