@@ -1,8 +1,27 @@
 package model
 
-import "rest-api-pos/config"
+import (
+	"log"
+	"rest-api-pos/config"
+)
+
+// autoMigrate runs the database migrations
+func AutoMigrate() error {
+	// Daftarkan model-model yang akan dimigrasikan (dibuat tabelnya)
+	err := config.DB.AutoMigrate(&Product{}, &Category{}, &Supplier{})
+	if err != nil {
+		return err
+	}
+	log.Println("Database migration completed successfully.")
+	return nil
+}
 
 func SeedData() {
+	err := AutoMigrate()
+	if err != nil {
+		return
+	}
+
 	// Sample Category
 	categories := []Category{
 		{Name: "Electronics"},
