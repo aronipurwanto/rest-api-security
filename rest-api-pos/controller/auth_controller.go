@@ -1,12 +1,14 @@
 package controller
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"rest-api-pos/config"
 	"rest-api-pos/response"
+	"strings"
 )
 
 // TokenResponse represents the response from Keycloak
@@ -39,32 +41,51 @@ func Login(c *fiber.Ctx) error {
 
 // getTokenFromKeycloak fetches token from Keycloak using username and password
 func getTokenFromKeycloak(username, password string) (*TokenResponse, error) {
-	data := map[string]string{
-		"client_id":     config.AppConfig.Keycloak.ClientID,
-		"client_secret": config.AppConfig.Keycloak.ClientSecret,
-		"grant_type":    "password",
-		"username":      username,
-		"password":      password,
-	}
+	data := url.Values{}
+	data.Set("client_id", config.AppConfig.Keycloak.ClientID)
+	data.Set("client_secret", config.AppConfig.Keycloak.ClientSecret)
+	data.Set("grant_type", "password")
+	data.Set("username", username)
+	data.Set("password", password)
 
-	reqBody, err := json.Marshal(data)
+	// Buat request POST
+	req, err := http.NewRequest("POST", config.AppConfig.Keycloak.URL+config.AppConfig.Keycloak.TokenEndpoint, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := http.Post(config.AppConfig.Keycloak.URL+config.AppConfig.Keycloak.TokenEndpoint, "application/x-www-form-urlencoded", bytes.NewBuffer(reqBody))
+	// Set header Content-Type ke form-url-encoded
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	// Baca body respons
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
 
+	// Periksa tipe konten dari respons
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.Contains(contentType, "application/json") {
+		// Jika bukan JSON, tampilkan respons untuk debugging
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Unexpected response format from Keycloak: "+string(bodyBytes))
+	}
+
+	// Periksa jika status code tidak 200 OK
+	if resp.StatusCode != http.StatusOK {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Keycloak responded with an error: "+string(bodyBytes))
+	}
+
+	// Decode JSON dari body response
 	var tokenResponse TokenResponse
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResponse); err != nil {
-		return nil, err
+	if err := json.Unmarshal(bodyBytes, &tokenResponse); err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Failed to decode Keycloak response: "+string(bodyBytes))
 	}
 
 	return &tokenResponse, nil
@@ -91,19 +112,21 @@ func RefreshToken(c *fiber.Ctx) error {
 
 // RefreshTokenFromKeycloak refreshes the access token using refresh token
 func RefreshTokenFromKeycloak(refreshToken string) (*TokenResponse, error) {
-	data := map[string]string{
-		"client_id":     config.AppConfig.Keycloak.ClientID,
-		"client_secret": config.AppConfig.Keycloak.ClientSecret,
-		"grant_type":    "refresh_token",
-		"refresh_token": refreshToken,
-	}
+	data := url.Values{}
+	data.Set("client_id", config.AppConfig.Keycloak.ClientID)
+	data.Set("client_secret", config.AppConfig.Keycloak.ClientSecret)
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", refreshToken)
 
-	reqBody, err := json.Marshal(data)
+	req, err := http.NewRequest("POST", config.AppConfig.Keycloak.URL+config.AppConfig.Keycloak.TokenEndpoint, strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := http.Post(config.AppConfig.Keycloak.URL+config.AppConfig.Keycloak.TokenEndpoint, "application/x-www-form-urlencoded", bytes.NewBuffer(reqBody))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -123,21 +146,17 @@ func RefreshTokenFromKeycloak(refreshToken string) (*TokenResponse, error) {
 
 // GetProfile handles the request to get the user profile based on the logged-in user
 func GetProfile(c *fiber.Ctx) error {
-	// Ambil token dari header Authorization
 	accessToken := c.Get("Authorization")
 
-	// Pastikan token diawali dengan "Bearer "
 	if len(accessToken) > 7 && accessToken[:7] == "Bearer " {
-		accessToken = accessToken[7:] // Hapus "Bearer " dari token
+		accessToken = accessToken[7:] // Remove "Bearer "
 	}
 
-	// Panggil Keycloak untuk mendapatkan user profile menggunakan access token
 	profile, err := getUserProfileFromKeycloak(accessToken)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(response.ErrorResponse(500, "Failed to fetch user profile"))
 	}
 
-	// Kembalikan profil pengguna
 	return c.JSON(response.SuccessResponse(profile, "User profile fetched successfully"))
 }
 
@@ -149,7 +168,6 @@ func getUserProfileFromKeycloak(accessToken string) (map[string]interface{}, err
 		return nil, err
 	}
 
-	// Tambahkan header Authorization dengan token
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	resp, err := client.Do(req)
@@ -158,7 +176,6 @@ func getUserProfileFromKeycloak(accessToken string) (map[string]interface{}, err
 	}
 	defer resp.Body.Close()
 
-	// Dekode hasil dari response menjadi map
 	var profile map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&profile); err != nil {
 		return nil, err

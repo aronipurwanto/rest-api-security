@@ -8,8 +8,8 @@ db:
   name: pos_system
 
 keycloak:
-  url: http://localhost:8080
-  client_id: golang-api-client
-  client_secret: your_client_secret
-  realm: api-realm
-  token_endpoint: /realms/api-realm/protocol/openid-connect/token
+  url: http://localhost:9090
+  client_id: pos-login
+  client_secret: b6izmGJaBOYYichZdOVjWeaQS1lLALVg
+  realm: pos-app
+  token_endpoint: realms/pos-app/protocol/openid-connect/token

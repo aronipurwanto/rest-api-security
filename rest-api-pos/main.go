@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"log"
 	"rest-api-pos/config"
-	"rest-api-pos/middleware"
 	"rest-api-pos/router"
 )
 
@@ -14,9 +13,6 @@ func main() {
 
 	// Initialize Fiber app
 	app := fiber.New()
-
-	// Add middleware (example: request logging)
-	app.Use(middleware.AuthMiddleware)
 
 	// Setup routes
 	router.SetupRoutes(app)
