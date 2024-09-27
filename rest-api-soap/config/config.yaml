@@ -1,0 +1,5 @@
+soap:
+  endpoint: "http://example.com/soap"
+  username: "testuser"
+  password: "testpassword"
+  timeout: 30 # in seconds
